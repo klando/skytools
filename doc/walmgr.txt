@@ -62,30 +62,30 @@ listed below.
   --config-dir=CONFIG_DIR::
 	Configuration file location for --init-X commands
 
-  --ssh-keygen
+  --ssh-keygen::
 	master: generate SSH key pair if needed
 
-  --ssh-add-key=SSH_ADD_KEY
+  --ssh-add-key=SSH_ADD_KEY::
 	slave: add public key to authorized_hosts
 
-  --ssh-remove-key=SSH_REMOVE_KEY
+  --ssh-remove-key=SSH_REMOVE_KEY::
 	slave: remove master key from authorized_hosts
 
-  --primary-conninfo=PRIMARY_CONNINFO
+  --primary-conninfo=PRIMARY_CONNINFO::
 	slave: connect string for streaming replication master
 
-  --init-slave
+  --init-slave::
 	Initialize slave walmgr configuration
 
 == DAEMON OPTIONS ==
 
-  -r, --reload
+  -r, --reload::
 	reload config (send SIGHUP)
 
-  -s, --stop
+  -s, --stop::
 	stop program safely (send SIGINT)
 
-  -k, --kill
+  -k, --kill::
 	kill program immediately (send SIGTERM)
 
 == MASTER COMMANDS ==
