@@ -256,6 +256,15 @@ Quit program.
 
 Clear current buffer.
 
+== EXIT STATUS ==
+
+  0::
+    Successful program execution.
+
+== ENVIRONMENT ==
+
+PostgreSQL environment variables can be used.
+
 == NOT IMPLEMENTED COMMANDS ==
 
 TODO : is it up-to-date ?
@@ -274,6 +283,3 @@ TODO : is it up-to-date ?
 - show cascade;
 - show_queue_stats <q>;
 - status
-
-
-

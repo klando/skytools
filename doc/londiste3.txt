@@ -15,7 +15,7 @@ Londiste allows to setup and administer the replication, and is run as a
 daemon to handle the replication itself. (Londiste is just a complex
 PgQ Consumer).
 
-See <<quick_start,QUICK START>> below to start your first trigger-based
+See <<examples,EXAMPLES>> below to start your first trigger-based
 replication in few steps.
 
 The 'command' is one of Node, Replication, Information or Internal
@@ -331,9 +331,24 @@ Show info about all or a specific handler.
 
 Copy table logic.
 
-== QUICK START [[quick_start]] ==
+== EXIT STATUS ==
 
-TODO
+  0::
+    Successful program execution.
+
+== ENVIRONMENT ==
+
+PostgreSQL environment variables can be used.
+
+== EXAMPLES [[examples]] ==
+
+Londiste is provided with HowTos to help you make your fisrt steps:
+
+- How to set up simple replication.
+- How to set up cascaded replication.
+- How to set up table partitioning (handlers).
+
+
 
 
 
