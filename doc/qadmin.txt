@@ -7,7 +7,7 @@ qadmin - Easy to use admin console to examine and administer PgQ queues.
 
 == SYNOPSIS ==
 
-  qadmin.py [options]
+  qadmin [options]
 
 == DESCRIPTION ==
 
@@ -18,102 +18,124 @@ manage PgQ queueing system.
 
 It also offers a non-interactive mode to run one or more commands.
 
-qadmin keeps an history file in the home of the user ('~/.qadmin_history').
+qadmin keeps an history file in the home of the user (`~/.qadmin_history`).
 
 == GENERAL OPTIONS ==
 
   --help::
-	help screen
+    Help screen.
 
   --version::
-	print version
+    Print version.
 
 == CONNECTION OPTIONS ==
 
   -h host::
-	specify host to connect to (default: localhost via unix socket)
+    Sspecify host to connect to (default: localhost via unix socket).
 
   -p port::
-	specify port
+    Specify port.
 
   -U user::
-	specify user name
+    Specify user name.
 
   -d dbname::
-	database name
+    Database name.
 
   -Q queuename::
-	queue name, it is used as the 'default queue' if it is provided
+    Queue name, it is used as the `default queue` if it is provided.
 
 == SPECIFIC OPTIONS ==
 
-  -c cmd_string::
-	execute console command
+  -c 'cmd_string'::
+    Execute console command.
 
-  -f execfile::
-	execute file containing console commands
+  -f 'execfile'::
+    Execute file containing console commands.
 
 == CONNECTION COMMANDS ==
 
-qadmin offers to connect to other databases from the console itself.
+qadmin offers to connect to other databases or queues from the console
+itself.
 
 === connect <connstring> [queue=<qname>]; ===
-Connect the console to the specified connection string, optional
+
+Connect the console with the specified connection string, optional
 parameter to set the default queue on connection.
 
-=== connect [queue=<qname> node=<node>]; ===
+=== connect [queue=<qname>] [node=<node>]; ===
+
 Connect the console to the specified queue and/or node.
 
 == MANAGEMENT COMMANDS ==
 
 === install pgq | londiste; ===
+
 Install PgQ or Londiste to the connected database.
 
 === create queue <qname>; ===
+
 Create the specified queue.
 
 === alter queue <qname | *> set param =<foo=1>,<bar=2>; ===
+
 Set one or more parameters on one or all queue at once.
 
 === drop queue <qname>; ===
+
 Drop the named queue.
 
-=== register consumer <consumer> [on <qname> | at <tick_id> | copy <consumer> ]* ; ===
-Register a consumer.
-TODO: why '*', review this item.
+=== register consumer <consumer> [on <qname> | at <tick_id> | copy <consumer> ]; ===
+
+Register a consumer on a queue, or at a specified tick or based on
+another consumer.
 
 === unregister consumer <consumer | *> [from <qname>]; ===
-Unregister one or all consumers from one or all queues.
+
+Unregister one or all consumers, if the console is not connected to a
+queue, its name must be provided.
 
 === register subconsumer <subconsumer> for <consumer> [on <qname>]; ===
-Register a subconsumer to a consumer, optionnaly specifying the queue
-affected.
+
+Register a subconsumer to a consumer, if the console is not connected to a
+queue, its name must be provided.
 
 === unregister subconsumer <subconsumer | *> for <consumer> [from <qname>] [close [batch]]; ===
-TODO: review this item.
+
+Unregister one or all subconsumers from a consumer, if the console is
+not connected to a queue, its name must be provided.
+Current batch can be aborted if the `close batch` subcommand is
+provided.
 
 == SHOW COMMANDS ==
 
 === show help; ===
+
 Show all the console commands.
 
 === show queue [ <qname | *> ]; ===
+
 Show details of one or all queues.
 
 === show table <tbl>; ===
+
 Show DDL for the specified table.
 
 === show sequence <seq>; ===
+
 Show DDL for the specified sequence.
 
 === show consumer [ <consumer | *> [on <qname>] ]; ===
+
 Show details of one or all consumers on one or all queues.
 
 === show batch <batch_id>; ===
+
 Show details of the batch, default queue must be set (see `connect queue`)
 
 === show batch <consumer>; ===
-Show details of the current batch for the specififed consumer, default
+
+Show details of the current batch for the specified consumer, default
 queue must be set (see `connect queue`)
 
 == LONDISTE COMMANDS ==
@@ -124,29 +146,28 @@ to.
 === londiste add table <tbl> [with ... ] ===
 
   with no_triggers::
-    skip trigger creation
+    Skip trigger creation.
 
   with skip_truncate::
-    does not truncate the table on the destination
+    Does not truncate the table on the destination.
 
   with expect_sync::
-    set table state to 'ok'
+    Set table state to 'ok'.
 
   with tgflags='UIDBAQL'::
-    trigger creation flags, see below for details
-
-TODO: review the following items:
+    Trigger creation flags, see below for details.
 
   with backup::
+    Put urlencoded contents of old row to `ev_extra2`.
 
   with skip::
-    create skip trigger. same as S flag
+    Create skip trigger. Same as S flag.
 
-  with when='EXPR'::
-    TODO
+  with when='expr'::
+    If 'expr' returns false, don't insert event.
 
   with ev_XX='EXPR'::
-    TODO
+    Overwrite default ev_* columns (see below).
 
 Trigger creation flags (default: AIUDL):
 
@@ -159,16 +180,28 @@ Trigger creation flags (default: AIUDL):
 - A - AFTER
 - S - SKIP
 
+Queue event fields:
+
+- ev_type   - I/U/D
+- ev_data   - partial SQL statement
+- ev_extra1 - table name
+- ev_extra2 - optional urlencoded backup
+
+
 === londiste add sequence <seq>; ===
-Add the specified sequence to londiste replication.
+
+Add the specified sequence to Londiste replication.
 
 === londiste remove table <tbl> [,tbl]; ===
-Remove the specified table(s) from the londiste replication.
+
+Remove the specified table(s) from the Londiste replication.
 
 === londiste remove sequence <seq> [,seq]; ===
-Remove the specified sequence(s) from the londiste replication.
+
+Remove the specified sequence(s) from the Londiste replication.
 
 === londiste tables; ===
+
 List registered tables and informations about them:
 
 - table_name      - fully-qualified table name
@@ -181,25 +214,30 @@ List registered tables and informations about them:
 - copy_pos        - position in parallel copy working order
 
 ==== copy_role = lead ====
+
 On copy start, drop indexes and store in dropped_ddl.
 
 On copy finish change state to catching-up, then wait until copy_role
 turns to NULL.
 
-Catching-up: if dropped_ddl is not NULL, restore them
+Catching-up: if dropped_ddl is not NULL, restore them.
 
 ==== copy_role = wait-copy ====
-On copy start wait, until role changes (to wait-replay)
+
+On copy start wait, until role changes (to wait-replay).
 
 ==== copy_role = wait-replay ====
+
 On copy finish, tag as 'catching-up'.
 
-Wait until copy_role is NULL, then proceed
+Wait until copy_role is NULL, then proceed.
 
 === londiste seqs; ===
+
 List registered sequences on this node and their last value.
 
 === londiste missing; ===
+
 On Master, list tables not registered on set.
 
 On Slave, list tables on set but not registered locally.
@@ -207,13 +245,16 @@ On Slave, list tables on set but not registered locally.
 == OTHER COMMANDS ==
 
 === exit; ===
+
 Quit program.
 
 === ^D ===
-Quit program
+
+Quit program.
 
 === ^C ===
-Clear current buffer
+
+Clear current buffer.
 
 == NOT IMPLEMENTED COMMANDS ==
 
