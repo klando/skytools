@@ -1,0 +1,271 @@
+
+= londiste3(1) =
+
+== NAME ==
+
+londiste3 - tool for managing trigger-based replication for PostgreSQL.
+
+== SYNOPSIS ==
+
+  londiste3 [options] <config.ini> command [subcmd args]
+
+== DESCRIPTION ==
+
+Londiste allows to setup and administer the replication, and is run as a
+daemon to handle the replication itself. (Londiste is just a complex
+PgQ Consumer).
+
+See <<quick_start,QUICK START>> below to start your first trigger-based
+replication in few steps.
+
+The 'command' is one of XXXXXXXXXXXXXX TODO commands listed below.
+
+== GENERAL OPTIONS ==
+
+  -V, --version::
+	print version info and exit
+
+  -h, --help::
+	show this help message and exit
+
+  -q, --quiet::
+	log only errors and warnings
+
+  -v, --verbose::
+	log verbosely
+
+  -d, --daemon::
+	go background
+
+== SPECIFIC OPTIONS ==
+
+  --ini::
+	display sample ini file
+
+  --set=SET::
+	override config setting (--set 'PARAM=VAL')
+
+== DAEMON OPTIONS ==
+
+  -r, --reload::
+	reload config (send SIGHUP)
+
+  -s, --stop::
+	stop program safely (send SIGINT)
+
+  -k, --kill::
+	kill program immediately (send SIGTERM)
+
+== CASCADING OPTIONS ==
+
+  --provider=PROVIDER::
+	init: upstream node temp connect string
+
+  --target=TARGET::
+	switchover: target node
+
+  --merge=MERGE::
+	create-leaf: combined queue name
+
+  --dead=DEAD::
+	cascade: assume node is dead
+
+  --dead-root::
+	takeover: old node was root
+
+  --dead-branch::
+	takeover: old node was branch
+
+== REPAIR QUEUE OPTIONS ==
+
+  --rewind::
+	change queue position according to destination
+
+  --reset::
+	reset queue pos on destination side
+
+== ADD OPTIONS ==
+
+  --all::
+		add: include add possible tables
+
+  --dest-table=DEST_TABLE::
+		add: redirect changes to different table
+
+  --force::
+		add: ignore table differences, repair: ignore lag
+
+  --expect-sync::
+		add: no copy needed
+
+  --skip-truncate::
+		add: keep old data
+
+  --create::
+		add: create table/seq if not exist, with minimal schema
+
+  --create-full::
+		add: create table/seq if not exist, with full schema
+
+  --trigger-flags=TRIGGER_FLAGS::
+		add: Set trigger flags (BAIUDLQ)
+
+  --trigger-arg=TRIGGER_ARG::
+		add: Custom trigger arg (can be specified multiply times)
+
+  --no-triggers::
+		add: Dont put triggers on table (makes sense on leaf)
+
+  --handler=HANDLER::
+		add: Custom handler for table
+
+  --handler-arg=HANDLER_ARG::
+		add: Argument to custom handler
+
+  --copy-condition=COPY_CONDITION::
+		add: set WHERE expression for copy
+
+  --merge-all::
+		merge tables from all source queues
+
+  --no-merge::
+		don't merge tables from source queues
+
+  --max-parallel-copy=MAX_PARALLEL_COPY::
+		max number of parallel copy processes
+
+== NODE INITIALIZATION COMMANDS ==
+
+=== create-root <name> <connstr> ===
+Initializes a Master node.
+
+TODO   setadm: give worker name with switch --worker.
+
+=== create-branch <name> <connstr> --provider=<public_connstr> ===
+Initializes a slave node which can be used as a reference for other
+nodes.
+
+TODO   setadm: give worker name with switch --worker.
+
+=== create-leaf <name> <connstr> --provider=<public_connstr> ===
+Initializes a slave node which can not be used as a references for other
+nodes.
+
+TODO   setadm: give worker name with switch --worker.
+
+== NODE ADMINISTRATION COMMANDS ==
+
+=== pause ===
+Pause a consumer.
+
+TODO     setadm: --node and/or --consumer switches to specify
+     either node or consumer.
+
+=== resume ===
+Resume a consumer.
+
+TODO     setadm: --node and/or --consumer switches to specify
+     either node or consumer.
+
+=== change-provider --provider NEW ===
+Change where consumer reads from
+
+TODO     setadm: --node and/or --consumer switches to specify
+     either node or consumer.
+
+== WORKS, NAMING PROBLEMS ==
+
+=== status ===
+Show set state      [set-status]
+
+=== members ===
+Show members in set [nodes]
+
+=== takeover FROMNODE [--all] [--dead] ===
+TODO
+
+== BROKEN ==
+
+=== drop-node NAME ===
+TODO
+
+=== show-consumers [--node] ===
+TODO
+
+=== tag-dead NODE .. ===
+Tag node as dead
+
+=== tag-alive NODE .. ===
+Tag node as alive
+
+== REPLICATION DAEMON ==
+
+=== worker ===
+replay events to subscriber
+
+== REPLICATION ADMINISTRATION ==
+
+=== add-table TBL ... ===
+add table to queue
+
+=== remove-table TBL ... ===
+remove table from queue
+
+=== add-seq SEQ ... ===
+add sequence to provider
+
+=== remove-seq SEQ ... ===
+remove sequence from provider
+
+=== tables ===
+show all tables on provider
+
+=== seqs ===
+show all sequences on provider
+
+=== missing ===
+list tables subscriber has not yet attached to
+
+=== resync TBL ... ===
+do full copy again
+
+== REPLICATION EXTRA COMMANDS ==
+
+=== check ===
+compare table structure on both sides
+
+=== fkeys ===
+print out fkey drop/create commands
+
+=== compare [TBL ...] ===
+compare table contents on both sides
+
+=== repair [TBL ...] ===
+repair data on subscriber
+
+=== execute [FILE ...] ===
+execute SQL files on set
+
+=== show-handlers [..] ===
+show info about all or specific handler
+
+== INTERNAL COMMAND ==
+
+=== copy ===
+copy table logic
+
+== QUICK START [[quick_start]]
+
+TODO
+
+
+
+
+
+
+
+
+
+
+
+
