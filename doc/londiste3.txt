@@ -7,7 +7,7 @@ londiste3 - tool for managing trigger-based replication for PostgreSQL.
 
 == SYNOPSIS ==
 
-  londiste3 [options] <config.ini> command [subcmd args]
+  londiste3 <config.ini> command [subcommand] [options]
 
 == DESCRIPTION ==
 
@@ -18,251 +18,322 @@ PgQ Consumer).
 See <<quick_start,QUICK START>> below to start your first trigger-based
 replication in few steps.
 
-The 'command' is one of XXXXXXXXXXXXXX TODO commands listed below.
+The 'command' is one of Node, Replication, Information or Internal
+commands listed below.
+
+Londiste introduces the notion of 'takeover', it is the action when a
+local node takes over the work of another node. The other node can be a
+root node or a branch node and it can be dead or alive when the action
+is run.
+
+Londiste also allows, among many other features,  cascading replication,
+partial replication and custom handlers for replication.
 
 == GENERAL OPTIONS ==
 
   -V, --version::
-	print version info and exit
+    Print version info and exit.
 
   -h, --help::
-	show this help message and exit
+    Show this help message and exit.
 
   -q, --quiet::
-	log only errors and warnings
+    Log only errors and warnings.
 
   -v, --verbose::
-	log verbosely
+    Log verbosely.
 
   -d, --daemon::
-	go background
+    Run in daemon mode (go background).
 
 == SPECIFIC OPTIONS ==
 
   --ini::
-	display sample ini file
+    Display sample ini file.
 
-  --set=SET::
-	override config setting (--set 'PARAM=VAL')
+  --set="'param=val[,param=value]'"::
+    Override config setting.
 
 == DAEMON OPTIONS ==
 
   -r, --reload::
-	reload config (send SIGHUP)
+    Reload config (send SIGHUP).
 
   -s, --stop::
-	stop program safely (send SIGINT)
+    Stop program safely (send SIGINT).
 
   -k, --kill::
-	kill program immediately (send SIGTERM)
+    Kill program immediately (send SIGTERM).
 
-== CASCADING OPTIONS ==
-
-  --provider=PROVIDER::
-	init: upstream node temp connect string
-
-  --target=TARGET::
-	switchover: target node
-
-  --merge=MERGE::
-	create-leaf: combined queue name
-
-  --dead=DEAD::
-	cascade: assume node is dead
-
-  --dead-root::
-	takeover: old node was root
-
-  --dead-branch::
-	takeover: old node was branch
-
-== REPAIR QUEUE OPTIONS ==
+== REPLICATION EXTRA ARGUMENTS ==
 
   --rewind::
-	change queue position according to destination
+    Change queue position according to destination.
 
   --reset::
-	reset queue pos on destination side
-
-== ADD OPTIONS ==
-
-  --all::
-		add: include add possible tables
-
-  --dest-table=DEST_TABLE::
-		add: redirect changes to different table
-
-  --force::
-		add: ignore table differences, repair: ignore lag
-
-  --expect-sync::
-		add: no copy needed
-
-  --skip-truncate::
-		add: keep old data
-
-  --create::
-		add: create table/seq if not exist, with minimal schema
-
-  --create-full::
-		add: create table/seq if not exist, with full schema
-
-  --trigger-flags=TRIGGER_FLAGS::
-		add: Set trigger flags (BAIUDLQ)
-
-  --trigger-arg=TRIGGER_ARG::
-		add: Custom trigger arg (can be specified multiply times)
-
-  --no-triggers::
-		add: Dont put triggers on table (makes sense on leaf)
-
-  --handler=HANDLER::
-		add: Custom handler for table
-
-  --handler-arg=HANDLER_ARG::
-		add: Argument to custom handler
-
-  --copy-condition=COPY_CONDITION::
-		add: set WHERE expression for copy
-
-  --merge-all::
-		merge tables from all source queues
-
-  --no-merge::
-		don't merge tables from source queues
-
-  --max-parallel-copy=MAX_PARALLEL_COPY::
-		max number of parallel copy processes
+    Reset queue position on destination side.
 
 == NODE INITIALIZATION COMMANDS ==
 
-=== create-root <name> <connstr> ===
+Initialization commands are the only ones that requires a connection
+string argument. It is the connection string that Londiste3 will store,
+other nodes will use it to connect to the current node.
+
+=== create-root <node> <connstr> ===
+
 Initializes a Master node.
 
-TODO   setadm: give worker name with switch --worker.
+The <node> is the name of the node, it should be unique.
+The <connstr> argument is the connection string to the database on the
+Master node.
 
-=== create-branch <name> <connstr> --provider=<public_connstr> ===
-Initializes a slave node which can be used as a reference for other
+=== create-branch <node> <connstr> --provider=<public_connstr> ===
+
+Initializes a Slave node which can be used as a reference for other
 nodes.
 
-TODO   setadm: give worker name with switch --worker.
+The <node> is the name of the node, it should be unique.
+The <connstr> argument is the connection string to the database on the
+current node and <public_connstr> is the connection string to the
+provider database (it can be a root node or a branch node).
 
-=== create-leaf <name> <connstr> --provider=<public_connstr> ===
-Initializes a slave node which can not be used as a references for other
+=== create-leaf <node> <connstr> --provider=<public_connstr> ===
+
+Initializes a Slave node which can not be used as a reference for other
 nodes.
 
-TODO   setadm: give worker name with switch --worker.
+The <node> is the name of the node, it should be unique.
+The <connstr> argument is the connection string to the database on the
+current node and <public_connstr> is the connection string to the
+provider database (it can be a root node or a branch node).
+
+  --merge='qname'::
+    combined queue name
 
 == NODE ADMINISTRATION COMMANDS ==
 
 === pause ===
-Pause a consumer.
 
-TODO     setadm: --node and/or --consumer switches to specify
-     either node or consumer.
+Pause the consumer: the replication of the events is stopped and can be
+resumed later.
 
 === resume ===
-Resume a consumer.
 
-TODO     setadm: --node and/or --consumer switches to specify
-     either node or consumer.
+When the consumer has been paused, let it replay again.
 
-=== change-provider --provider NEW ===
-Change where consumer reads from
+=== change-provider <tonode> ===
 
-TODO     setadm: --node and/or --consumer switches to specify
-     either node or consumer.
+Make <tonode> become the new provider for the current node.
 
-== WORKS, NAMING PROBLEMS ==
+TODO: londiste.py need update (param change from --provider)
+
+=== takeover <fromnode> [--target=<tonode>] [--all] [--dead] ===
+
+This command allows to achieve failover and switchover for any of your
+providers (root or branch nodes).
+
+  --target='tonode'::
+    Target node of the takeover.
+
+  --all::
+    In addition to take over the work from the 'fromnode', make other
+    nodes change their provider to the current node.
+
+  --dead::
+    Don't wait to take the new role and flag the 'fromnode' as dead.
+
+  --dead='deadnode'::
+    Assume node is dead.
+    TODO : why use this one ?
+
+  --dead-root::
+    Old node was root.
+
+  --dead-branch::
+    Old node was branch
+
+=== drop-node <node> ===
+
+Remove the node from the Londiste replication.
+
+Londiste triggers on the node are removed but Londiste or PgQ are not
+removed.
+
+=== tag-dead <node> ===
+
+Tag the node as dead, the command can be run from any node in the
+replication.
+
+=== tag-alive <node> ===
+
+Tag the node as alive, the command can be run from any node in the
+replication.
+
+== INFORMATION COMMANDS ==
 
 === status ===
-Show set state      [set-status]
+
+Show status of the replication viewed by the current node.
+
+The output is a tree of the members of the replication with their lags,
+last tick, status and the number of tables in state: ok/half/ignored
+(replicated, initial copy not finnished, table not replicated locally).
 
 === members ===
-Show members in set [nodes]
 
-=== takeover FROMNODE [--all] [--dead] ===
-TODO
+Show members of the replication viewed by the current node.
 
-== BROKEN ==
-
-=== drop-node NAME ===
-TODO
+Output the nodes name, status and node location (connection string to
+the node).
 
 === show-consumers [--node] ===
-TODO
 
-=== tag-dead NODE .. ===
-Tag node as dead
+TODO: command is not working
 
-=== tag-alive NODE .. ===
-Tag node as alive
-
-== REPLICATION DAEMON ==
+== REPLICATION DAEMON COMMAND ==
 
 === worker ===
-replay events to subscriber
 
-== REPLICATION ADMINISTRATION ==
+Replay events to subscriber: it is needed to make the replication active
+as it will start to replay the events.
 
-=== add-table TBL ... ===
-add table to queue
+== REPLICATION ADMINISTRATION COMMANDS ==
 
-=== remove-table TBL ... ===
-remove table from queue
+=== add-table <table> [args] ===
 
-=== add-seq SEQ ... ===
-add sequence to provider
+Add the table to the replication.
 
-=== remove-seq SEQ ... ===
-remove sequence from provider
+See <<add_args,ADD ARGUMENTS>> below for the list of possible arguments.
+
+=== remove-table <table> ===
+
+Remove the table from the replication.
+
+=== add-seq <seq> [args] ===
+
+Add the sequence to the replication.
+
+See <<add_args,ADD ARGUMENTS>> below for the list of possible arguments.
+
+=== remove-seq <seq> ===
+
+Remove the sequence from the replication.
 
 === tables ===
-show all tables on provider
+
+Show all tables on provider.
 
 === seqs ===
-show all sequences on provider
+
+Show all sequences on provider.
 
 === missing ===
-list tables subscriber has not yet attached to
 
-=== resync TBL ... ===
-do full copy again
+List tables subscriber has not yet attached to.
+
+=== resync <table> ===
+
+Do full copy of the table, again.
+
+== ADD ARGUMENTS [[add_args]] ==
+
+  --all::
+    Include all possible tables.
+
+  --dest-table='table'::
+    Redirect changes to different table.
+
+  --force::
+    Ignore table differences.
+
+  --expect-sync::
+    No copy needed.
+
+  --skip-truncate::
+    Keep old data.
+
+  --create::
+    Create table/sequence if not exist, with minimal schema.
+
+  --create-full::
+    Create table/sequence if not exist, with full schema.
+
+  --trigger-flags='trigger_flags'::
+    Trigger creation flags, see below for details.
+
+  --trigger-arg='trigger_arg'::
+    Custom trigger arg (can be specified multiply times).
+
+  --no-triggers::
+    Dont put triggers on table (makes sense on leaf node).
+
+  --handler='handler'::
+    Custom handler for table.
+
+  --handler-arg='handler_arg'::
+    Argument to custom handler.
+
+  --copy-condition='copy_condition'::
+    Set WHERE expression for copy.
+
+  --merge-all::
+    Merge tables from all source queues.
+
+  --no-merge::
+    Don't merge tables from source queues.
+
+  --max-parallel-copy='max_parallel_copy'::
+    Max number of parallel copy processes.
+
+Trigger creation flags (default: AIUDL):
+
+- I - ON INSERT
+- U - ON UPDATE
+- D - ON DELETE
+- Q - use pgq.sqltriga() as trigger function
+- L - use pgq.logutriga() as trigger function
+- B - BEFORE
+- A - AFTER
+- S - SKIP
 
 == REPLICATION EXTRA COMMANDS ==
 
 === check ===
-compare table structure on both sides
+
+Compare table structure on both sides.
 
 === fkeys ===
-print out fkey drop/create commands
 
-=== compare [TBL ...] ===
-compare table contents on both sides
+Print out fkey drop/create commands.
 
-=== repair [TBL ...] ===
-repair data on subscriber
+=== compare [<table>] ===
 
-=== execute [FILE ...] ===
-execute SQL files on set
+Compare table contents on both sides.
 
-=== show-handlers [..] ===
-show info about all or specific handler
+=== repair [<table>] [--force] ===
+
+Repair data on subscriber.
+
+  --force::
+    Ignore lag.
+
+=== execute [filepath] ===
+
+Execute SQL files on each nodes of the set.
+
+=== show-handlers ['handler'] ===
+
+Show info about all or a specific handler.
 
 == INTERNAL COMMAND ==
 
 === copy ===
-copy table logic
 
-== QUICK START [[quick_start]]
+Copy table logic.
+
+== QUICK START [[quick_start]] ==
 
 TODO
-
-
-
-
-
-
 
 
 
