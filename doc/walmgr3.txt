@@ -69,8 +69,8 @@ listed below.
   --ssh-keygen::
     Generate a SSH key pair if needed (used in Master).
 
-  --ssh-add-key='ssh_key'::
-    Add the public key to authorized_hosts file (used in Slave).
+  --ssh-add-key='keyfile.pub'::
+    Add the public key file to authorized_hosts file (used in Slave).
 
   --ssh-remove-key='ssh_key'::
     Remove Master ssh key from authorized_hosts file (used in Slave).
@@ -298,7 +298,7 @@ traffic at the cost of extra CPU time.
 
 Keep symlinks for `pg_xlog` and `pg_log`.
 
-==== hot_standby ===
+==== hot_standby ====
 
 If set to 1, walmgr3 setup will set `wal_level` to `hot_standby`
 (PostgreSQL 9.0 and newer).
@@ -471,49 +471,49 @@ PostgreSQL environment variables can be used.
 
 == QUICK START [[quick_start]] ==
 
-TODO: review after this point
+1. Set up passwordless ssh-key on Master and write configuration file
 
-1. Set up passwordless ssh authentication from master to slave
+  master$ walmgr3 --ssh-keygen --init-master --slave <slave_hostname>
 
-     master$ test -f ~/.ssh/id_dsa.pub || ssh-keygen -t dsa
-     master$ cat ~/.ssh/id_dsa.pub | ssh slave cat \>\> .ssh/authorized_keys
+2. Set up passwordless ssh authentication from Master to Slave and write
+   configuration file on Slave
 
-2. Configure paths
+  slave$ walmgr3 --init-slave --ssh-add-key=/tmp/id_rsa.pub
 
-     master$ edit master.ini
-     slave$ edit slave.ini
+3. Logging setup on Master and Slave
 
-     Make sure that walmgr.py executable has same pathname on slave and master.
+  master$ cp skylog.ini ~postgres/
+  slave$ cp skylog.ini ~postgres/
 
-3. Start archival process and create a base backup
+4. Start archival process and create a base backup
 
-     master$ ./walmgr.py master.ini setup
-     master$ ./walmgr.py master.ini backup
+  master$ walmgr3 /var/lib/postgresql/conf/wal-master.ini setup
+  master$ walmgr3 /var/lib/postgresql/conf/wal-master.ini backup
 
-   Note: starting from PostgreSQL 8.3 the archiving is enabled by setting
-   archive_mode GUC to on. However changing this parameter requires the 
-   server to be restarted.
+  CAUTION: starting from PostgreSQL 8.3 the archiving is enabled by
+  setting archive_mode GUC to on. However changing this parameter
+  requires the server to be restarted.
 
-4. Prepare postgresql.conf and pg_hba.conf on slave and start replay
+5. Prepare postgresql.conf and pg_hba.conf on Slave and start replay
 
-     master$ scp $PGDATA/*.conf slave:
-     slave$ ./walmgr.py slave.ini restore
+  slave$ walmgr3 /var/lib/postgresql/conf/wal-slave.ini restore
 
-   For debian based distributions the standard configuration files are located
-   in /etc/postgresql/x.x/main directory. If another scheme is used the postgresql.conf 
-   and pg_hba.conf should be copied to slave full_backup directory. Make sure to
-   disable archive_command in slave config.
+  For debian based distributions the standard configuration files are
+  located in /etc/postgresql/x.x/main directory. If another scheme is
+  used the postgresql.conf and pg_hba.conf should be copied to slave
+  full_backup directory. Make sure to disable archive_command in slave
+  config.
 
-   'walmgr.py restore' moves data in place, creates recovery.conf and starts postmaster
-   in recovery mode.
+  'walmgr3 restore' moves data in place, creates recovery.conf and
+  starts postmaster in recovery mode.
 
-5. In-progress WAL segments can be backup by command:
+6. In-progress WAL segments can be backup by command:
 
-    master$ ./walmgr.py master.ini sync
+    master$ walmgr3 /var/lib/postgresql/conf/wal-master.ini sync
 
-6. If need to stop replay on slave and boot into normal mode, do:
+7. If need to stop replay on Slave and boot into normal mode, do:
 
-    slave$ ./walmgr.py slave.ini boot
+    slave$ walmgr3 /var/lib/postgresql/conf/wal-slave.ini boot
 
 
 
